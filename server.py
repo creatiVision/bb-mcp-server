@@ -75,7 +75,7 @@ async def bb_add_account(
     receipt_creates_transaction: bool = False,
     is_revision_safe: bool = False,
 ) -> str:
-    """Add a new account (Konto). type: 'cash', 'bank/institution', or 'other'."""
+    """Add a new account (Konto). type: 'cash', 'bank/institution', or 'other'. Required: type, name, postingaccount_number."""
     try:
         payload = {
             "type": type,
@@ -133,7 +133,7 @@ async def bb_list_cost_locations(
 
 @mcp.tool()
 async def bb_add_cost_location(code: str, name: str) -> str:
-    """Add a new cost location (Kostenstelle)."""
+    """Add a new cost location (Kostenstelle). Required: code, name."""
     try:
         return _ok(_api_post("cost-locations/add", {"code": code, "name": name}))
     except Exception as e:
@@ -142,7 +142,7 @@ async def bb_add_cost_location(code: str, name: str) -> str:
 
 @mcp.tool()
 async def bb_update_cost_location(code: str, name: str) -> str:
-    """Update a cost location's name."""
+    """Update a cost location's name. Required: code, name."""
     try:
         return _ok(_api_post("cost-locations/update", {"code": code, "name": name}))
     except Exception as e:
@@ -151,7 +151,7 @@ async def bb_update_cost_location(code: str, name: str) -> str:
 
 @mcp.tool()
 async def bb_delete_cost_location(code: str) -> str:
-    """Delete a cost location by code."""
+    """Delete a cost location by code. Required: code."""
     try:
         return _ok(_api_post("cost-locations/delete", {"code": code}))
     except Exception as e:
@@ -436,7 +436,7 @@ async def bb_create_einvoice(
 @mcp.tool()
 async def bb_list_postings(
     date_from: str = "2025-01-01",
-    date_to: str = "",
+    date_to: str = "2025-12-31",
     limit: int = 500,
     offset: int = 0,
     account: str = "",
@@ -447,11 +447,9 @@ async def bb_list_postings(
     date_last_action_to: str = "",
     order: str = "",
 ) -> str:
-    """List all postings (Buchungssätze). Supports filtering by date, account, postingaccount, status, cost_location, and last action date."""
+    """List all postings (Buchungssätze). date_from and date_to are both required (default: full year 2025). order: 'default', 'date ASC', 'date DESC', 'date_last_action ASC', 'date_last_action DESC', 'id_by_customer ASC', 'id_by_customer DESC'."""
     try:
-        payload: dict = {"limit": limit, "offset": offset, "date_from": date_from}
-        if date_to:
-            payload["date_to"] = date_to
+        payload: dict = {"limit": limit, "offset": offset, "date_from": date_from, "date_to": date_to}
         if account:
             payload["account"] = account
         if postingaccount:
@@ -551,53 +549,45 @@ async def bb_create_postings_batch_transactions(transaction_postings: list) -> s
 
 @mcp.tool()
 async def bb_assign_receipt_to_free_posting(
-    receipt_id_by_customer: str,
-    posting_id: str,
+    receipt_id_by_customer: int,
+    posting_id_by_customer: int,
 ) -> str:
-    """Assign a receipt to a free posting."""
+    """Assign a receipt to a free posting. Required: receipt_id_by_customer, posting_id_by_customer."""
     try:
         return _ok(_api_post("postings/assign/receipt-to-free-posting", {
             "receipt_id_by_customer": receipt_id_by_customer,
-            "posting_id": posting_id,
+            "posting_id_by_customer": posting_id_by_customer,
         }))
     except Exception as e:
         return _err(e)
 
 
 @mcp.tool()
-async def bb_unconfirm_free_posting(posting_id: str) -> str:
-    """Unconfirm (delete) a free posting by its ID."""
+async def bb_unconfirm_free_posting(posting_id_by_customer: int) -> str:
+    """Unconfirm (delete) a free posting by its customer ID. Required: posting_id_by_customer."""
     try:
-        return _ok(_api_post("postings/unconfirm/free", {"posting_id": posting_id}))
+        return _ok(_api_post("postings/unconfirm/free", {"posting_id_by_customer": posting_id_by_customer}))
     except Exception as e:
         return _err(e)
 
 
 @mcp.tool()
-async def bb_unconfirm_receipt_posting(
-    receipt_id_by_customer: str,
-    posting_id: str,
-) -> str:
-    """Unconfirm (delete) a receipt posting."""
+async def bb_unconfirm_receipt_posting(receipt_id_by_customer: int) -> str:
+    """Unconfirm (delete) all postings for a receipt. Required: receipt_id_by_customer."""
     try:
         return _ok(_api_post("postings/unconfirm/receipt", {
             "receipt_id_by_customer": receipt_id_by_customer,
-            "posting_id": posting_id,
         }))
     except Exception as e:
         return _err(e)
 
 
 @mcp.tool()
-async def bb_unconfirm_transaction_posting(
-    transaction_id_by_customer: str,
-    posting_id: str,
-) -> str:
-    """Unconfirm (delete) a transaction posting."""
+async def bb_unconfirm_transaction_posting(transaction_id_by_customer: int) -> str:
+    """Unconfirm (delete) all postings for a transaction. Required: transaction_id_by_customer."""
     try:
         return _ok(_api_post("postings/unconfirm/transaction", {
             "transaction_id_by_customer": transaction_id_by_customer,
-            "posting_id": posting_id,
         }))
     except Exception as e:
         return _err(e)
@@ -721,7 +711,12 @@ async def bb_upload_receipt(
 
 @mcp.tool()
 async def bb_add_receipt(
-    list_direction: str = "inbound",
+    type: str,
+    counterparty: str,
+    invoice_number: str,
+    date: str,
+    amount: float,
+    currency: str = "EUR",
     vat_rate: float = 0.0,
     account: int = 0,
     creditor_debtor: int = 0,
@@ -730,9 +725,16 @@ async def bb_add_receipt(
     date_payment_due: str = "",
     link_to_receipt_id_by_customer: int = 0,
 ) -> str:
-    """Create a receipt entry without uploading a file."""
+    """Create a receipt entry without uploading a file. Required: type ('invoice inbound'/'invoice outbound'/'credit inbound'/'credit outbound'), counterparty, invoice_number, date (YYYY-MM-DD), amount."""
     try:
-        payload: dict = {"list_direction": list_direction}
+        payload: dict = {
+            "type": type,
+            "counterparty": counterparty,
+            "invoice_number": invoice_number,
+            "date": date,
+            "amount": amount,
+            "currency": currency,
+        }
         if vat_rate:
             payload["vat_rate"] = vat_rate
         if account:
