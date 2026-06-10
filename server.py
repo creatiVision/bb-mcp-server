@@ -1201,7 +1201,6 @@ async def bb_unassign_receipt_from_transaction(
 # ═══════════════════════════════════════════════════════════════
 
 if __name__ == "__main__":
-    import sys
     import uvicorn
     from starlette.middleware.base import BaseHTTPMiddleware
     from starlette.requests import Request
