@@ -12,7 +12,7 @@ import sys
 import json
 import base64
 import httpx
-from typing import Optional, Any
+from typing import Optional
 from mcp.server.fastmcp import FastMCP
 
 mcp = FastMCP("buchhaltungsbutler")
