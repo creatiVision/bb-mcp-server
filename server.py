@@ -286,7 +286,39 @@ async def bb_create_invoice(
     payment_reference: str = "",
 ) -> str:
     """Create an invoice (Rechnung). type: 'invoice', 'credit', or 'offer'. show_prices_type: 'net' or 'gross'."""
-    payload = _build_invoice_payload(**locals())
+    payload = _build_invoice_payload(
+        type=type,
+        company_name=company_name,
+        item_name=item_name,
+        item_amount=item_amount,
+        item_single_price=item_single_price,
+        item_vat=item_vat,
+        show_prices_type=show_prices_type,
+        date=date,
+        item_unit=item_unit,
+        item_description=item_description,
+        contact_person_name=contact_person_name,
+        street=street,
+        additional_addressline=additional_addressline,
+        zip=zip,
+        city=city,
+        country=country,
+        email=email,
+        invoicenumber=invoicenumber,
+        correspondence=correspondence,
+        discount_type=discount_type,
+        discount_value=discount_value,
+        payment_conditions=payment_conditions,
+        due_days=due_days,
+        final_provisions=final_provisions,
+        show_bankdata=show_bankdata,
+        show_contactdata=show_contactdata,
+        recurring_interval=recurring_interval,
+        recurring_date_next=recurring_date_next,
+        date_of_supply=date_of_supply,
+        customer_number=customer_number,
+        payment_reference=payment_reference,
+    )
     return _ok(_api_post("invoices/create", payload))
 
 
@@ -323,7 +355,36 @@ async def bb_create_invoice_draft(
     customer_number: str = "",
 ) -> str:
     """Create an invoice draft (Entwurf). Same params as bb_create_invoice but without invoicenumber/payment_reference/due_days."""
-    payload = _build_invoice_payload(**locals())
+    payload = _build_invoice_payload(
+        type=type,
+        company_name=company_name,
+        item_name=item_name,
+        item_amount=item_amount,
+        item_single_price=item_single_price,
+        item_vat=item_vat,
+        show_prices_type=show_prices_type,
+        date=date,
+        item_unit=item_unit,
+        item_description=item_description,
+        contact_person_name=contact_person_name,
+        street=street,
+        additional_addressline=additional_addressline,
+        zip=zip,
+        city=city,
+        country=country,
+        email=email,
+        correspondence=correspondence,
+        discount_type=discount_type,
+        discount_value=discount_value,
+        payment_conditions=payment_conditions,
+        final_provisions=final_provisions,
+        show_bankdata=show_bankdata,
+        show_contactdata=show_contactdata,
+        recurring_interval=recurring_interval,
+        recurring_date_next=recurring_date_next,
+        date_of_supply=date_of_supply,
+        customer_number=customer_number,
+    )
     return _ok(_api_post("invoices/create/draft", payload))
 
 
@@ -868,7 +929,21 @@ async def bb_add_creditor(
     due_in_days: int = 0,
 ) -> str:
     """Add a new creditor (Kreditor / Lieferant)."""
-    payload = _build_contact_payload(**locals())
+    payload = _build_contact_payload(
+        name=name,
+        contact_person_name=contact_person_name,
+        street=street,
+        additional_address_line=additional_address_line,
+        zip=zip,
+        city=city,
+        country=country,
+        sales_tax_id=sales_tax_id,
+        email=email,
+        iban=iban,
+        bic=bic,
+        postingaccount_number=postingaccount_number,
+        due_in_days=due_in_days,
+    )
     return _ok(_api_post("settings/add/creditor", payload))
 
 
@@ -890,7 +965,21 @@ async def bb_add_debtor(
     postingaccount_number: str = "",
 ) -> str:
     """Add a new debtor (Debitor / Kunde)."""
-    payload = _build_contact_payload(**locals())
+    payload = _build_contact_payload(
+        name=name,
+        contact_person_name=contact_person_name,
+        street=street,
+        additional_address_line=additional_address_line,
+        customer_number=customer_number,
+        zip=zip,
+        city=city,
+        country=country,
+        sales_tax_id=sales_tax_id,
+        email=email,
+        iban=iban,
+        bic=bic,
+        postingaccount_number=postingaccount_number,
+    )
     return _ok(_api_post("settings/add/debtor", payload))
 
 
@@ -943,7 +1032,20 @@ async def bb_update_creditor(
     due_in_days: int = 0,
 ) -> str:
     """Update an existing creditor (Kreditor)."""
-    payload = _build_contact_payload(**locals())
+    payload = _build_contact_payload(
+        name=name,
+        contact_person_name=contact_person_name,
+        street=street,
+        additional_address_line=additional_address_line,
+        zip=zip,
+        city=city,
+        country=country,
+        sales_tax_id=sales_tax_id,
+        email=email,
+        iban=iban,
+        bic=bic,
+        due_in_days=due_in_days,
+    )
     return _ok(_api_post("settings/update/creditor", payload))
 
 
@@ -964,7 +1066,20 @@ async def bb_update_debtor(
     bic: str = "",
 ) -> str:
     """Update an existing debtor (Debitor)."""
-    payload = _build_contact_payload(**locals())
+    payload = _build_contact_payload(
+        name=name,
+        contact_person_name=contact_person_name,
+        street=street,
+        additional_address_line=additional_address_line,
+        customer_number=customer_number,
+        zip=zip,
+        city=city,
+        country=country,
+        sales_tax_id=sales_tax_id,
+        email=email,
+        iban=iban,
+        bic=bic,
+    )
     return _ok(_api_post("settings/update/debtor", payload))
 
 
