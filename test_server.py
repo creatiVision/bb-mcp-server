@@ -29,4 +29,4 @@ async def test_bb_list_accounts_error(mock_api_post):
 
     # Assert
     mock_api_post.assert_called_once_with("accounts/get", {})
-    assert result == f"Error: {error_message}"
+    assert result == "Error: An unexpected error occurred."

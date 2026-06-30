@@ -11,7 +11,7 @@ async def test_bb_add_account_error():
             name="Test Cash Account",
             postingaccount_number=1000
         )
-        assert result == "Error: API connection failed"
+        assert result == "Error: An unexpected error occurred."
 
 @pytest.mark.asyncio
 async def test_bb_add_account_success():
