@@ -8,6 +8,9 @@ Swagger:  https://app.buchhaltungsbutler.de/docs/api/v1.de.json
 """
 
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 import sys
 import json
 import base64
@@ -51,7 +54,8 @@ def _ok(data: dict) -> str:
 
 
 def _err(e: Exception) -> str:
-    return f"Error: {e}"
+    logger.error(f"Unexpected error: {e}", exc_info=True)
+    return "Error: An unexpected error occurred."
 
 from functools import wraps
 
