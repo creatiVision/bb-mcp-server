@@ -12,7 +12,7 @@ import sys
 import json
 import base64
 import httpx
-from typing import Optional
+from typing import Optional, TypedDict, Any
 from mcp.server.fastmcp import FastMCP
 
 mcp = FastMCP("buchhaltungsbutler")
@@ -159,94 +159,73 @@ async def bb_delete_cost_location(code: str) -> str:
 # 3.4 INVOICES
 # ═══════════════════════════════════════════════════════════════
 
-def _build_invoice_payload(
-    type: str,
-    company_name: str,
-    item_name: list,
-    item_amount: list,
-    item_single_price: list,
-    item_vat: list,
-    show_prices_type: str = "gross",
-    date: str = "",
-    item_unit: Optional[list] = None,
-    item_description: Optional[list] = None,
-    contact_person_name: str = "",
-    street: str = "",
-    additional_addressline: str = "",
-    zip: str = "",
-    city: str = "",
-    country: str = "DE",
-    email: str = "",
-    invoicenumber: str = "",
-    correspondence: str = "",
-    discount_type: str = "",
-    discount_value: str = "",
-    payment_conditions: str = "",
-    due_days: str = "",
-    final_provisions: str = "",
-    show_bankdata: bool = False,
-    show_contactdata: bool = False,
-    recurring_interval: str = "",
-    recurring_date_next: str = "",
-    date_of_supply: str = "",
-    customer_number: str = "",
-    payment_reference: str = "",
-) -> dict:
+class InvoiceData(TypedDict, total=False):
+    type: str
+    company_name: str
+    item_name: list
+    item_amount: list
+    item_single_price: list
+    item_vat: list
+    show_prices_type: str
+    date: str
+    item_unit: Optional[list]
+    item_description: Optional[list]
+    contact_person_name: str
+    street: str
+    additional_addressline: str
+    zip: str
+    city: str
+    country: str
+    email: str
+    invoicenumber: str
+    correspondence: str
+    discount_type: str
+    discount_value: str
+    payment_conditions: str
+    due_days: str
+    final_provisions: str
+    show_bankdata: bool
+    show_contactdata: bool
+    recurring_interval: str
+    recurring_date_next: str
+    date_of_supply: str
+    customer_number: str
+    payment_reference: str
+
+
+def _build_invoice_payload(data: InvoiceData) -> dict:
     """Build the common invoice payload."""
     payload: dict = {
-        "type": type,
-        "show_prices_type": show_prices_type,
-        "company_name": company_name,
-        "date": date,
-        "item_name": item_name,
-        "item_amount": item_amount,
-        "item_single_price": item_single_price,
-        "item_vat": item_vat,
-        "show_bankdata": show_bankdata,
-        "show_contactdata": show_contactdata,
+        "type": data.get("type"),
+        "show_prices_type": data.get("show_prices_type", "gross"),
+        "company_name": data.get("company_name"),
+        "date": data.get("date", ""),
+        "item_name": data.get("item_name"),
+        "item_amount": data.get("item_amount"),
+        "item_single_price": data.get("item_single_price"),
+        "item_vat": data.get("item_vat"),
+        "show_bankdata": data.get("show_bankdata", False),
+        "show_contactdata": data.get("show_contactdata", False),
     }
-    if item_unit:
-        payload["item_unit"] = item_unit
-    if item_description:
-        payload["item_description"] = item_description
-    if contact_person_name:
-        payload["contact_person_name"] = contact_person_name
-    if street:
-        payload["street"] = street
-    if additional_addressline:
-        payload["additional_addressline"] = additional_addressline
-    if zip:
-        payload["zip"] = zip
-    if city:
-        payload["city"] = city
-    if country:
-        payload["country"] = country
-    if email:
-        payload["email"] = email
-    if invoicenumber:
-        payload["invoicenumber"] = invoicenumber
-    if correspondence:
-        payload["correspondence"] = correspondence
-    if discount_type:
-        payload["discount_type"] = discount_type
-    if discount_value:
-        payload["discount_value"] = discount_value
-    if payment_conditions:
-        payload["payment_conditions"] = payment_conditions
-    if due_days:
-        payload["due_days"] = due_days
-    if final_provisions:
-        payload["final_provisions"] = final_provisions
-    if recurring_interval:
-        payload["recurring_interval"] = recurring_interval
-    if recurring_date_next:
-        payload["recurring_date_next"] = recurring_date_next
-    if date_of_supply:
-        payload["date_of_supply"] = date_of_supply
-    if customer_number:
-        payload["customer_number"] = customer_number
-    if payment_reference:
-        payload["payment_reference"] = payment_reference
+
+    optional_keys = [
+        "item_unit", "item_description", "contact_person_name", "street",
+        "additional_addressline", "zip", "city", "email",
+        "invoicenumber", "correspondence", "discount_type", "discount_value",
+        "payment_conditions", "due_days", "final_provisions", "recurring_interval",
+        "recurring_date_next", "date_of_supply", "customer_number", "payment_reference"
+    ]
+
+    for key in optional_keys:
+        if data.get(key):
+            payload[key] = data[key]
+
+    # Handle country default if present in data but empty, or not present
+    if "country" in data and data["country"]:
+        payload["country"] = data["country"]
+    elif "country" not in payload:
+        payload["country"] = "DE"
+
     return payload
 
 
@@ -286,7 +265,7 @@ async def bb_create_invoice(
     payment_reference: str = "",
 ) -> str:
     """Create an invoice (Rechnung). type: 'invoice', 'credit', or 'offer'. show_prices_type: 'net' or 'gross'."""
-    payload = _build_invoice_payload(**locals())
+    payload = _build_invoice_payload(locals())
     return _ok(_api_post("invoices/create", payload))
 
 
@@ -323,7 +302,7 @@ async def bb_create_invoice_draft(
     customer_number: str = "",
 ) -> str:
     """Create an invoice draft (Entwurf). Same params as bb_create_invoice but without invoicenumber/payment_reference/due_days."""
-    payload = _build_invoice_payload(**locals())
+    payload = _build_invoice_payload(locals())
     return _ok(_api_post("invoices/create/draft", payload))
 
 
