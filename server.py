@@ -801,52 +801,28 @@ async def bb_list_postingaccounts(
     return _ok(_api_post("settings/get/postingaccounts", payload))
 
 
-def _build_contact_payload(
-    name: str = "",
-    contact_person_name: str = "",
-    street: str = "",
-    additional_address_line: str = "",
-    zip: str = "",
-    city: str = "",
-    country: str = "DE",
-    sales_tax_id: str = "",
-    email: str = "",
-    iban: str = "",
-    bic: str = "",
-    postingaccount_number: str = "",
-    due_in_days: int = 0,
-    customer_number: str = "",
-) -> dict:
+def _build_contact_payload(contact_data: dict) -> dict:
     """Build common payload for creditor/debtor operations."""
     payload: dict = {}
-    if name:
-        payload["name"] = name
-    if contact_person_name:
-        payload["contact_person_name"] = contact_person_name
-    if street:
-        payload["street"] = street
-    if additional_address_line:
-        payload["additional_address_line"] = additional_address_line
-    if zip:
-        payload["zip"] = zip
-    if city:
-        payload["city"] = city
-    if country:
-        payload["country"] = country
-    if sales_tax_id:
-        payload["sales_tax_id"] = sales_tax_id
-    if email:
-        payload["email"] = email
-    if iban:
-        payload["iban"] = iban
-    if bic:
-        payload["bic"] = bic
-    if postingaccount_number:
-        payload["postingaccount_number"] = postingaccount_number
-    if due_in_days:
-        payload["due_in_days"] = due_in_days
-    if customer_number:
-        payload["customer_number"] = customer_number
+    allowed_fields = [
+        "name",
+        "contact_person_name",
+        "street",
+        "additional_address_line",
+        "zip",
+        "city",
+        "country",
+        "sales_tax_id",
+        "email",
+        "iban",
+        "bic",
+        "postingaccount_number",
+        "due_in_days",
+        "customer_number",
+    ]
+    for field in allowed_fields:
+        if contact_data.get(field):
+            payload[field] = contact_data[field]
     return payload
 
 
@@ -868,7 +844,7 @@ async def bb_add_creditor(
     due_in_days: int = 0,
 ) -> str:
     """Add a new creditor (Kreditor / Lieferant)."""
-    payload = _build_contact_payload(**locals())
+    payload = _build_contact_payload(locals())
     return _ok(_api_post("settings/add/creditor", payload))
 
 
@@ -890,7 +866,7 @@ async def bb_add_debtor(
     postingaccount_number: str = "",
 ) -> str:
     """Add a new debtor (Debitor / Kunde)."""
-    payload = _build_contact_payload(**locals())
+    payload = _build_contact_payload(locals())
     return _ok(_api_post("settings/add/debtor", payload))
 
 
@@ -943,7 +919,7 @@ async def bb_update_creditor(
     due_in_days: int = 0,
 ) -> str:
     """Update an existing creditor (Kreditor)."""
-    payload = _build_contact_payload(**locals())
+    payload = _build_contact_payload(locals())
     return _ok(_api_post("settings/update/creditor", payload))
 
 
@@ -964,7 +940,7 @@ async def bb_update_debtor(
     bic: str = "",
 ) -> str:
     """Update an existing debtor (Debitor)."""
-    payload = _build_contact_payload(**locals())
+    payload = _build_contact_payload(locals())
     return _ok(_api_post("settings/update/debtor", payload))
 
 
