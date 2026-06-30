@@ -28,9 +28,7 @@ API_KEY = os.getenv("BUCHHALTUNGSBUTLER_API_KEY", "")
 def _auth_headers() -> dict:
     if not API_CLIENT or not API_SECRET:
         return {}
-    credentials = base64.b64encode(
-        f"{API_CLIENT}:{API_SECRET}".encode()
-    ).decode()
+    credentials = base64.b64encode(f"{API_CLIENT}:{API_SECRET}".encode()).decode()
     return {
         "Authorization": f"Basic {credentials}",
         "Content-Type": "application/json",
@@ -53,7 +51,9 @@ def _ok(data: dict) -> str:
 def _err(e: Exception) -> str:
     return f"Error: {e}"
 
+
 from functools import wraps
+
 
 def handle_errors(func):
     @wraps(func)
@@ -62,12 +62,14 @@ def handle_errors(func):
             return await func(*args, **kwargs)
         except Exception as e:
             return _err(e)
+
     return wrapper
 
 
 # ═══════════════════════════════════════════════════════════════
 # 3.1 ACCOUNTS
 # ═══════════════════════════════════════════════════════════════
+
 
 @mcp.tool()
 @handle_errors
@@ -100,6 +102,7 @@ async def bb_add_account(
 # 3.2 COMMENTS
 # ═══════════════════════════════════════════════════════════════
 
+
 @mcp.tool()
 @handle_errors
 async def bb_add_comment(
@@ -119,6 +122,7 @@ async def bb_add_comment(
 # ═══════════════════════════════════════════════════════════════
 # 3.3 COST LOCATIONS
 # ═══════════════════════════════════════════════════════════════
+
 
 @mcp.tool()
 @handle_errors
@@ -158,6 +162,7 @@ async def bb_delete_cost_location(code: str) -> str:
 # ═══════════════════════════════════════════════════════════════
 # 3.4 INVOICES
 # ═══════════════════════════════════════════════════════════════
+
 
 def _build_invoice_payload(
     type: str,
@@ -286,7 +291,39 @@ async def bb_create_invoice(
     payment_reference: str = "",
 ) -> str:
     """Create an invoice (Rechnung). type: 'invoice', 'credit', or 'offer'. show_prices_type: 'net' or 'gross'."""
-    payload = _build_invoice_payload(**locals())
+    payload = _build_invoice_payload(
+        type=type,
+        company_name=company_name,
+        item_name=item_name,
+        item_amount=item_amount,
+        item_single_price=item_single_price,
+        item_vat=item_vat,
+        show_prices_type=show_prices_type,
+        date=date,
+        item_unit=item_unit,
+        item_description=item_description,
+        contact_person_name=contact_person_name,
+        street=street,
+        additional_addressline=additional_addressline,
+        zip=zip,
+        city=city,
+        country=country,
+        email=email,
+        invoicenumber=invoicenumber,
+        correspondence=correspondence,
+        discount_type=discount_type,
+        discount_value=discount_value,
+        payment_conditions=payment_conditions,
+        due_days=due_days,
+        final_provisions=final_provisions,
+        show_bankdata=show_bankdata,
+        show_contactdata=show_contactdata,
+        recurring_interval=recurring_interval,
+        recurring_date_next=recurring_date_next,
+        date_of_supply=date_of_supply,
+        customer_number=customer_number,
+        payment_reference=payment_reference,
+    )
     return _ok(_api_post("invoices/create", payload))
 
 
@@ -323,7 +360,36 @@ async def bb_create_invoice_draft(
     customer_number: str = "",
 ) -> str:
     """Create an invoice draft (Entwurf). Same params as bb_create_invoice but without invoicenumber/payment_reference/due_days."""
-    payload = _build_invoice_payload(**locals())
+    payload = _build_invoice_payload(
+        type=type,
+        company_name=company_name,
+        item_name=item_name,
+        item_amount=item_amount,
+        item_single_price=item_single_price,
+        item_vat=item_vat,
+        show_prices_type=show_prices_type,
+        date=date,
+        item_unit=item_unit,
+        item_description=item_description,
+        contact_person_name=contact_person_name,
+        street=street,
+        additional_addressline=additional_addressline,
+        zip=zip,
+        city=city,
+        country=country,
+        email=email,
+        correspondence=correspondence,
+        discount_type=discount_type,
+        discount_value=discount_value,
+        payment_conditions=payment_conditions,
+        final_provisions=final_provisions,
+        show_bankdata=show_bankdata,
+        show_contactdata=show_contactdata,
+        recurring_interval=recurring_interval,
+        recurring_date_next=recurring_date_next,
+        date_of_supply=date_of_supply,
+        customer_number=customer_number,
+    )
     return _ok(_api_post("invoices/create/draft", payload))
 
 
@@ -424,6 +490,7 @@ async def bb_create_einvoice(
 # 3.5 POSTINGS
 # ═══════════════════════════════════════════════════════════════
 
+
 @mcp.tool()
 @handle_errors
 async def bb_list_postings(
@@ -440,7 +507,12 @@ async def bb_list_postings(
     order: str = "",
 ) -> str:
     """List all postings (Buchungssätze). date_from and date_to are both required (default: full year 2025). order: 'default', 'date ASC', 'date DESC', 'date_last_action ASC', 'date_last_action DESC', 'id_by_customer ASC', 'id_by_customer DESC'."""
-    payload: dict = {"limit": limit, "offset": offset, "date_from": date_from, "date_to": date_to}
+    payload: dict = {
+        "limit": limit,
+        "offset": offset,
+        "date_from": date_from,
+        "date_to": date_to,
+    }
     if account:
         payload["account"] = account
     if postingaccount:
@@ -476,21 +548,25 @@ async def bb_create_posting(
         endpoint = "postings/add/receipt"
         payload: dict = {
             "receipt_id_by_customer": receipt_id_by_customer,
-            "postings": [{
-                "account": account,
-                "amount": amount,
-                "postingaccount": postingaccount,
-            }],
+            "postings": [
+                {
+                    "account": account,
+                    "amount": amount,
+                    "postingaccount": postingaccount,
+                }
+            ],
         }
     elif posting_type == "transaction" and transaction_id_by_customer:
         endpoint = "postings/add/transaction"
         payload = {
             "transaction_id_by_customer": transaction_id_by_customer,
-            "postings": [{
-                "account": account,
-                "amount": amount,
-                "postingaccount": postingaccount,
-            }],
+            "postings": [
+                {
+                    "account": account,
+                    "amount": amount,
+                    "postingaccount": postingaccount,
+                }
+            ],
         }
     else:
         endpoint = "postings/add/free"
@@ -518,14 +594,21 @@ async def bb_create_postings_batch_free(free_postings: list) -> str:
 @handle_errors
 async def bb_create_postings_batch_receipts(receipt_postings: list) -> str:
     """Create multiple receipt postings in batch. receipt_postings is a list of dicts with keys: receipt_id_by_customer, postings (list of {account, amount, postingaccount}), cost_locations (opt), cost_locations_two (opt)."""
-    return _ok(_api_post("postings/add-batch/receipts", {"receipt_postings": receipt_postings}))
+    return _ok(
+        _api_post("postings/add-batch/receipts", {"receipt_postings": receipt_postings})
+    )
 
 
 @mcp.tool()
 @handle_errors
 async def bb_create_postings_batch_transactions(transaction_postings: list) -> str:
     """Create multiple transaction postings in batch. transaction_postings is a list of dicts with keys: transaction_id_by_customer, postings (list of {account, amount, postingaccount}), cost_locations (opt), cost_locations_two (opt)."""
-    return _ok(_api_post("postings/add-batch/transactions", {"transaction_postings": transaction_postings}))
+    return _ok(
+        _api_post(
+            "postings/add-batch/transactions",
+            {"transaction_postings": transaction_postings},
+        )
+    )
 
 
 @mcp.tool()
@@ -535,40 +618,61 @@ async def bb_assign_receipt_to_free_posting(
     posting_id_by_customer: int,
 ) -> str:
     """Assign a receipt to a free posting. Required: receipt_id_by_customer, posting_id_by_customer."""
-    return _ok(_api_post("postings/assign/receipt-to-free-posting", {
-        "receipt_id_by_customer": receipt_id_by_customer,
-        "posting_id_by_customer": posting_id_by_customer,
-    }))
+    return _ok(
+        _api_post(
+            "postings/assign/receipt-to-free-posting",
+            {
+                "receipt_id_by_customer": receipt_id_by_customer,
+                "posting_id_by_customer": posting_id_by_customer,
+            },
+        )
+    )
 
 
 @mcp.tool()
 @handle_errors
 async def bb_unconfirm_free_posting(posting_id_by_customer: int) -> str:
     """Unconfirm (delete) a free posting by its customer ID. Required: posting_id_by_customer."""
-    return _ok(_api_post("postings/unconfirm/free", {"posting_id_by_customer": posting_id_by_customer}))
+    return _ok(
+        _api_post(
+            "postings/unconfirm/free",
+            {"posting_id_by_customer": posting_id_by_customer},
+        )
+    )
 
 
 @mcp.tool()
 @handle_errors
 async def bb_unconfirm_receipt_posting(receipt_id_by_customer: int) -> str:
     """Unconfirm (delete) all postings for a receipt. Required: receipt_id_by_customer."""
-    return _ok(_api_post("postings/unconfirm/receipt", {
-        "receipt_id_by_customer": receipt_id_by_customer,
-    }))
+    return _ok(
+        _api_post(
+            "postings/unconfirm/receipt",
+            {
+                "receipt_id_by_customer": receipt_id_by_customer,
+            },
+        )
+    )
 
 
 @mcp.tool()
 @handle_errors
 async def bb_unconfirm_transaction_posting(transaction_id_by_customer: int) -> str:
     """Unconfirm (delete) all postings for a transaction. Required: transaction_id_by_customer."""
-    return _ok(_api_post("postings/unconfirm/transaction", {
-        "transaction_id_by_customer": transaction_id_by_customer,
-    }))
+    return _ok(
+        _api_post(
+            "postings/unconfirm/transaction",
+            {
+                "transaction_id_by_customer": transaction_id_by_customer,
+            },
+        )
+    )
 
 
 # ═══════════════════════════════════════════════════════════════
 # 3.6 RECEIPTS (BELEGE)
 # ═══════════════════════════════════════════════════════════════
+
 
 @mcp.tool()
 @handle_errors
@@ -743,23 +847,30 @@ async def bb_get_assigned_transactions(
 @handle_errors
 async def bb_delete_receipt(receipt_id_by_customer: str) -> str:
     """Delete a receipt by its customer ID."""
-    return _ok(_api_post("receipts/delete/id_by_customer", {
-        "receipt_id_by_customer": receipt_id_by_customer
-    }))
+    return _ok(
+        _api_post(
+            "receipts/delete/id_by_customer",
+            {"receipt_id_by_customer": receipt_id_by_customer},
+        )
+    )
 
 
 @mcp.tool()
 @handle_errors
 async def bb_restore_receipt(receipt_id_by_customer: str) -> str:
     """Restore a previously deleted receipt."""
-    return _ok(_api_post("receipts/restore/id_by_customer", {
-        "receipt_id_by_customer": receipt_id_by_customer
-    }))
+    return _ok(
+        _api_post(
+            "receipts/restore/id_by_customer",
+            {"receipt_id_by_customer": receipt_id_by_customer},
+        )
+    )
 
 
 # ═══════════════════════════════════════════════════════════════
 # 3.7 SETTINGS
 # ═══════════════════════════════════════════════════════════════
+
 
 @mcp.tool()
 @handle_errors
@@ -868,7 +979,21 @@ async def bb_add_creditor(
     due_in_days: int = 0,
 ) -> str:
     """Add a new creditor (Kreditor / Lieferant)."""
-    payload = _build_contact_payload(**locals())
+    payload = _build_contact_payload(
+        name=name,
+        contact_person_name=contact_person_name,
+        street=street,
+        additional_address_line=additional_address_line,
+        zip=zip,
+        city=city,
+        country=country,
+        sales_tax_id=sales_tax_id,
+        email=email,
+        iban=iban,
+        bic=bic,
+        postingaccount_number=postingaccount_number,
+        due_in_days=due_in_days,
+    )
     return _ok(_api_post("settings/add/creditor", payload))
 
 
@@ -890,7 +1015,20 @@ async def bb_add_debtor(
     postingaccount_number: str = "",
 ) -> str:
     """Add a new debtor (Debitor / Kunde)."""
-    payload = _build_contact_payload(**locals())
+    payload = _build_contact_payload(
+        name=name,
+        contact_person_name=contact_person_name,
+        street=street,
+        additional_address_line=additional_address_line,
+        zip=zip,
+        city=city,
+        country=country,
+        sales_tax_id=sales_tax_id,
+        email=email,
+        iban=iban,
+        bic=bic,
+        postingaccount_number=postingaccount_number,
+    )
     return _ok(_api_post("settings/add/debtor", payload))
 
 
@@ -943,7 +1081,20 @@ async def bb_update_creditor(
     due_in_days: int = 0,
 ) -> str:
     """Update an existing creditor (Kreditor)."""
-    payload = _build_contact_payload(**locals())
+    payload = _build_contact_payload(
+        name=name,
+        contact_person_name=contact_person_name,
+        street=street,
+        additional_address_line=additional_address_line,
+        zip=zip,
+        city=city,
+        country=country,
+        sales_tax_id=sales_tax_id,
+        email=email,
+        iban=iban,
+        bic=bic,
+        due_in_days=due_in_days,
+    )
     return _ok(_api_post("settings/update/creditor", payload))
 
 
@@ -964,7 +1115,19 @@ async def bb_update_debtor(
     bic: str = "",
 ) -> str:
     """Update an existing debtor (Debitor)."""
-    payload = _build_contact_payload(**locals())
+    payload = _build_contact_payload(
+        name=name,
+        contact_person_name=contact_person_name,
+        street=street,
+        additional_address_line=additional_address_line,
+        zip=zip,
+        city=city,
+        country=country,
+        sales_tax_id=sales_tax_id,
+        email=email,
+        iban=iban,
+        bic=bic,
+    )
     return _ok(_api_post("settings/update/debtor", payload))
 
 
@@ -989,6 +1152,7 @@ async def bb_update_postingaccount(
 # ═══════════════════════════════════════════════════════════════
 # 3.8 TRANSACTIONS
 # ═══════════════════════════════════════════════════════════════
+
 
 @mcp.tool()
 @handle_errors
@@ -1023,9 +1187,9 @@ async def bb_list_transactions(
 @handle_errors
 async def bb_get_transaction(id_by_customer: str) -> str:
     """Get a single transaction by its customer ID."""
-    return _ok(_api_post("transactions/get/id_by_customer", {
-        "id_by_customer": id_by_customer
-    }))
+    return _ok(
+        _api_post("transactions/get/id_by_customer", {"id_by_customer": id_by_customer})
+    )
 
 
 @mcp.tool()
@@ -1076,17 +1240,24 @@ async def bb_assign_receipt_to_transaction(
     transaction_id_by_customer: str,
 ) -> str:
     """Assign a receipt to a transaction."""
-    return _ok(_api_post("transactions/assign/receipt", {
-        "receipt_id_by_customer": receipt_id_by_customer,
-        "transaction_id_by_customer": transaction_id_by_customer,
-    }))
+    return _ok(
+        _api_post(
+            "transactions/assign/receipt",
+            {
+                "receipt_id_by_customer": receipt_id_by_customer,
+                "transaction_id_by_customer": transaction_id_by_customer,
+            },
+        )
+    )
 
 
 @mcp.tool()
 @handle_errors
 async def bb_assign_receipts_to_transactions_batch(assignments: list) -> str:
     """Assign multiple receipts to transactions in batch. Each dict has: receipt_id_by_customer, transaction_id_by_customer."""
-    return _ok(_api_post("transactions/assign-batch/receipt", {"assignments": assignments}))
+    return _ok(
+        _api_post("transactions/assign-batch/receipt", {"assignments": assignments})
+    )
 
 
 @mcp.tool()
@@ -1109,10 +1280,15 @@ async def bb_unassign_receipt_from_transaction(
     transaction_id_by_customer: str,
 ) -> str:
     """Unassign a receipt from a transaction."""
-    return _ok(_api_post("transactions/unassign/receipt", {
-        "receipt_id_by_customer": receipt_id_by_customer,
-        "transaction_id_by_customer": transaction_id_by_customer,
-    }))
+    return _ok(
+        _api_post(
+            "transactions/unassign/receipt",
+            {
+                "receipt_id_by_customer": receipt_id_by_customer,
+                "transaction_id_by_customer": transaction_id_by_customer,
+            },
+        )
+    )
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -1127,6 +1303,7 @@ if __name__ == "__main__":
     if "--transport" in sys.argv and "stdio" in sys.argv:
         mcp.run()
     else:
+
         class FixHostMiddleware(BaseHTTPMiddleware):
             async def dispatch(self, request: Request, call_next):
                 request.scope["headers"] = [
