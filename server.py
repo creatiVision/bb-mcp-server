@@ -205,48 +205,30 @@ def _build_invoice_payload(
         "show_bankdata": show_bankdata,
         "show_contactdata": show_contactdata,
     }
-    if item_unit:
-        payload["item_unit"] = item_unit
-    if item_description:
-        payload["item_description"] = item_description
-    if contact_person_name:
-        payload["contact_person_name"] = contact_person_name
-    if street:
-        payload["street"] = street
-    if additional_addressline:
-        payload["additional_addressline"] = additional_addressline
-    if zip:
-        payload["zip"] = zip
-    if city:
-        payload["city"] = city
-    if country:
-        payload["country"] = country
-    if email:
-        payload["email"] = email
-    if invoicenumber:
-        payload["invoicenumber"] = invoicenumber
-    if correspondence:
-        payload["correspondence"] = correspondence
-    if discount_type:
-        payload["discount_type"] = discount_type
-    if discount_value:
-        payload["discount_value"] = discount_value
-    if payment_conditions:
-        payload["payment_conditions"] = payment_conditions
-    if due_days:
-        payload["due_days"] = due_days
-    if final_provisions:
-        payload["final_provisions"] = final_provisions
-    if recurring_interval:
-        payload["recurring_interval"] = recurring_interval
-    if recurring_date_next:
-        payload["recurring_date_next"] = recurring_date_next
-    if date_of_supply:
-        payload["date_of_supply"] = date_of_supply
-    if customer_number:
-        payload["customer_number"] = customer_number
-    if payment_reference:
-        payload["payment_reference"] = payment_reference
+    optional_fields = {
+        "item_unit": item_unit,
+        "item_description": item_description,
+        "contact_person_name": contact_person_name,
+        "street": street,
+        "additional_addressline": additional_addressline,
+        "zip": zip,
+        "city": city,
+        "country": country,
+        "email": email,
+        "invoicenumber": invoicenumber,
+        "correspondence": correspondence,
+        "discount_type": discount_type,
+        "discount_value": discount_value,
+        "payment_conditions": payment_conditions,
+        "due_days": due_days,
+        "final_provisions": final_provisions,
+        "recurring_interval": recurring_interval,
+        "recurring_date_next": recurring_date_next,
+        "date_of_supply": date_of_supply,
+        "customer_number": customer_number,
+        "payment_reference": payment_reference,
+    }
+    payload.update({k: v for k, v in optional_fields.items() if v})
     return payload
 
 
@@ -383,40 +365,26 @@ async def bb_create_einvoice(
         "show_bankdata": show_bankdata,
         "show_contactdata": show_contactdata,
     }
-    if item_tax_amount:
-        payload["item_tax_amount"] = item_tax_amount
-    if item_unit:
-        payload["item_unit"] = item_unit
-    if item_description:
-        payload["item_description"] = item_description
-    if contact_person_name:
-        payload["contact_person_name"] = contact_person_name
-    if additional_addressline:
-        payload["additional_addressline"] = additional_addressline
-    if invoicenumber:
-        payload["invoicenumber"] = invoicenumber
-    if correspondence:
-        payload["correspondence"] = correspondence
-    if discount_type:
-        payload["discount_type"] = discount_type
-    if discount_value:
-        payload["discount_value"] = discount_value
-    if payment_conditions:
-        payload["payment_conditions"] = payment_conditions
-    if due_days:
-        payload["due_days"] = due_days
-    if final_provisions:
-        payload["final_provisions"] = final_provisions
-    if recurring_interval:
-        payload["recurring_interval"] = recurring_interval
-    if recurring_date_next:
-        payload["recurring_date_next"] = recurring_date_next
-    if date_of_supply:
-        payload["date_of_supply"] = date_of_supply
-    if customer_number:
-        payload["customer_number"] = customer_number
-    if payment_reference:
-        payload["payment_reference"] = payment_reference
+    optional_fields = {
+        "item_tax_amount": item_tax_amount,
+        "item_unit": item_unit,
+        "item_description": item_description,
+        "contact_person_name": contact_person_name,
+        "additional_addressline": additional_addressline,
+        "invoicenumber": invoicenumber,
+        "correspondence": correspondence,
+        "discount_type": discount_type,
+        "discount_value": discount_value,
+        "payment_conditions": payment_conditions,
+        "due_days": due_days,
+        "final_provisions": final_provisions,
+        "recurring_interval": recurring_interval,
+        "recurring_date_next": recurring_date_next,
+        "date_of_supply": date_of_supply,
+        "customer_number": customer_number,
+        "payment_reference": payment_reference,
+    }
+    payload.update({k: v for k, v in optional_fields.items() if v})
     return _ok(_api_post("invoices/create/e-invoice", payload))
 
 
@@ -818,36 +786,23 @@ def _build_contact_payload(
     customer_number: str = "",
 ) -> dict:
     """Build common payload for creditor/debtor operations."""
-    payload: dict = {}
-    if name:
-        payload["name"] = name
-    if contact_person_name:
-        payload["contact_person_name"] = contact_person_name
-    if street:
-        payload["street"] = street
-    if additional_address_line:
-        payload["additional_address_line"] = additional_address_line
-    if zip:
-        payload["zip"] = zip
-    if city:
-        payload["city"] = city
-    if country:
-        payload["country"] = country
-    if sales_tax_id:
-        payload["sales_tax_id"] = sales_tax_id
-    if email:
-        payload["email"] = email
-    if iban:
-        payload["iban"] = iban
-    if bic:
-        payload["bic"] = bic
-    if postingaccount_number:
-        payload["postingaccount_number"] = postingaccount_number
-    if due_in_days:
-        payload["due_in_days"] = due_in_days
-    if customer_number:
-        payload["customer_number"] = customer_number
-    return payload
+    optional_fields = {
+        "name": name,
+        "contact_person_name": contact_person_name,
+        "street": street,
+        "additional_address_line": additional_address_line,
+        "zip": zip,
+        "city": city,
+        "country": country,
+        "sales_tax_id": sales_tax_id,
+        "email": email,
+        "iban": iban,
+        "bic": bic,
+        "postingaccount_number": postingaccount_number,
+        "due_in_days": due_in_days,
+        "customer_number": customer_number,
+    }
+    return {k: v for k, v in optional_fields.items() if v}
 
 
 @mcp.tool()
@@ -916,13 +871,12 @@ async def bb_add_postingaccount(
     type: str = "",
 ) -> str:
     """Add a new posting account (Buchungskonto)."""
-    payload: dict = {}
-    if number:
-        payload["number"] = number
-    if name:
-        payload["name"] = name
-    if type:
-        payload["type"] = type
+    optional_fields = {
+        "number": number,
+        "name": name,
+        "type": type,
+    }
+    payload = {k: v for k, v in optional_fields.items() if v}
     return _ok(_api_post("settings/add/postingaccount", payload))
 
 
@@ -976,13 +930,12 @@ async def bb_update_postingaccount(
     type: str = "",
 ) -> str:
     """Update an existing posting account (Buchungskonto)."""
-    payload: dict = {}
-    if number:
-        payload["number"] = number
-    if name:
-        payload["name"] = name
-    if type:
-        payload["type"] = type
+    optional_fields = {
+        "number": number,
+        "name": name,
+        "type": type,
+    }
+    payload = {k: v for k, v in optional_fields.items() if v}
     return _ok(_api_post("settings/update/postingaccount", payload))
 
 
@@ -1004,18 +957,15 @@ async def bb_list_transactions(
 ) -> str:
     """List transactions (Bank transactions / Umsätze)."""
     payload: dict = {"limit": limit, "offset": offset}
-    if id_by_customer_from:
-        payload["id_by_customer_from"] = id_by_customer_from
-    if id_by_customer_to:
-        payload["id_by_customer_to"] = id_by_customer_to
-    if date_from:
-        payload["date_from"] = date_from
-    if date_to:
-        payload["date_to"] = date_to
-    if account:
-        payload["account"] = account
-    if to_from:
-        payload["to_from"] = to_from
+    optional_fields = {
+        "id_by_customer_from": id_by_customer_from,
+        "id_by_customer_to": id_by_customer_to,
+        "date_from": date_from,
+        "date_to": date_to,
+        "account": account,
+        "to_from": to_from,
+    }
+    payload.update({k: v for k, v in optional_fields.items() if v})
     return _ok(_api_post("transactions/get", payload))
 
 
@@ -1047,18 +997,15 @@ async def bb_add_transaction(
         "account_number": account_number,
         "currency": currency,
     }
-    if bank_code:
-        payload["bank_code"] = bank_code
-    if bank_name:
-        payload["bank_name"] = bank_name
-    if purpose:
-        payload["purpose"] = purpose
-    if type:
-        payload["type"] = type
-    if booking_text:
-        payload["booking_text"] = booking_text
-    if payment_reference:
-        payload["payment_reference"] = payment_reference
+    optional_fields = {
+        "bank_code": bank_code,
+        "bank_name": bank_name,
+        "purpose": purpose,
+        "type": type,
+        "booking_text": booking_text,
+        "payment_reference": payment_reference,
+    }
+    payload.update({k: v for k, v in optional_fields.items() if v})
     return _ok(_api_post("transactions/add", payload))
 
 
