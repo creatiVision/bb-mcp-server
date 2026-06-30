@@ -7,6 +7,7 @@ API Docs: https://app.buchhaltungsbutler.de/docs/api/v1/
 Swagger:  https://app.buchhaltungsbutler.de/docs/api/v1.de.json
 """
 
+import functools
 import os
 import sys
 import json
@@ -25,16 +26,21 @@ API_SECRET = os.getenv("BUCHHALTUNGSBUTLER_SECRET", "")
 API_KEY = os.getenv("BUCHHALTUNGSBUTLER_API_KEY", "")
 
 
-def _auth_headers() -> dict:
-    if not API_CLIENT or not API_SECRET:
+
+@functools.lru_cache(maxsize=1)
+def _compute_auth_headers(client: str, secret: str) -> dict:
+    if not client or not secret:
         return {}
     credentials = base64.b64encode(
-        f"{API_CLIENT}:{API_SECRET}".encode()
+        f"{client}:{secret}".encode()
     ).decode()
     return {
         "Authorization": f"Basic {credentials}",
         "Content-Type": "application/json",
     }
+
+def _auth_headers() -> dict:
+    return _compute_auth_headers(API_CLIENT, API_SECRET).copy()
 
 
 def _api_post(endpoint: str, payload: dict) -> dict:
