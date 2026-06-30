@@ -37,11 +37,14 @@ def _auth_headers() -> dict:
     }
 
 
-def _api_post(endpoint: str, payload: dict) -> dict:
+# Module-level client to be reused
+_http_client = httpx.AsyncClient(timeout=60.0)
+
+async def _api_post(endpoint: str, payload: dict) -> dict:
     """POST to BuchhaltungsButler API. All endpoints use POST with api_key in body."""
     url = f"{API_BASE_URL}/{endpoint}"
     payload = {**payload, "api_key": API_KEY}
-    r = httpx.post(url, headers=_auth_headers(), json=payload, timeout=60)
+    r = await _http_client.post(url, headers=_auth_headers(), json=payload)
     r.raise_for_status()
     return r.json()
 
@@ -73,7 +76,7 @@ def handle_errors(func):
 @handle_errors
 async def bb_list_accounts() -> str:
     """List all accounts (Konten)."""
-    return _ok(_api_post("accounts/get", {}))
+    return _ok(await _api_post("accounts/get", {}))
 
 
 @mcp.tool()
@@ -93,7 +96,7 @@ async def bb_add_account(
         "receipt_creates_transaction": receipt_creates_transaction,
         "is_revision_safe": is_revision_safe,
     }
-    return _ok(_api_post("accounts/add", payload))
+    return _ok(await _api_post("accounts/add", payload))
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -113,7 +116,7 @@ async def bb_add_comment(
         payload["receipt_id_by_customer"] = receipt_id_by_customer
     if transaction_id_by_customer:
         payload["transaction_id_by_customer"] = transaction_id_by_customer
-    return _ok(_api_post("comments/add", payload))
+    return _ok(await _api_post("comments/add", payload))
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -131,28 +134,28 @@ async def bb_list_cost_locations(
     payload: dict = {"limit": limit, "offset": offset}
     if code:
         payload["code"] = code
-    return _ok(_api_post("cost-locations/get", payload))
+    return _ok(await _api_post("cost-locations/get", payload))
 
 
 @mcp.tool()
 @handle_errors
 async def bb_add_cost_location(code: str, name: str) -> str:
     """Add a new cost location (Kostenstelle). Required: code, name."""
-    return _ok(_api_post("cost-locations/add", {"code": code, "name": name}))
+    return _ok(await _api_post("cost-locations/add", {"code": code, "name": name}))
 
 
 @mcp.tool()
 @handle_errors
 async def bb_update_cost_location(code: str, name: str) -> str:
     """Update a cost location's name. Required: code, name."""
-    return _ok(_api_post("cost-locations/update", {"code": code, "name": name}))
+    return _ok(await _api_post("cost-locations/update", {"code": code, "name": name}))
 
 
 @mcp.tool()
 @handle_errors
 async def bb_delete_cost_location(code: str) -> str:
     """Delete a cost location by code. Required: code."""
-    return _ok(_api_post("cost-locations/delete", {"code": code}))
+    return _ok(await _api_post("cost-locations/delete", {"code": code}))
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -287,7 +290,7 @@ async def bb_create_invoice(
 ) -> str:
     """Create an invoice (Rechnung). type: 'invoice', 'credit', or 'offer'. show_prices_type: 'net' or 'gross'."""
     payload = _build_invoice_payload(**locals())
-    return _ok(_api_post("invoices/create", payload))
+    return _ok(await _api_post("invoices/create", payload))
 
 
 @mcp.tool()
@@ -324,7 +327,7 @@ async def bb_create_invoice_draft(
 ) -> str:
     """Create an invoice draft (Entwurf). Same params as bb_create_invoice but without invoicenumber/payment_reference/due_days."""
     payload = _build_invoice_payload(**locals())
-    return _ok(_api_post("invoices/create/draft", payload))
+    return _ok(await _api_post("invoices/create/draft", payload))
 
 
 @mcp.tool()
@@ -417,7 +420,7 @@ async def bb_create_einvoice(
         payload["customer_number"] = customer_number
     if payment_reference:
         payload["payment_reference"] = payment_reference
-    return _ok(_api_post("invoices/create/e-invoice", payload))
+    return _ok(await _api_post("invoices/create/e-invoice", payload))
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -455,7 +458,7 @@ async def bb_list_postings(
         payload["date_last_action_to"] = date_last_action_to
     if order:
         payload["order"] = order
-    return _ok(_api_post("postings/get", payload))
+    return _ok(await _api_post("postings/get", payload))
 
 
 @mcp.tool()
@@ -504,28 +507,28 @@ async def bb_create_posting(
         payload["cost_location"] = cost_location
     if cost_location_two:
         payload["cost_location_two"] = cost_location_two
-    return _ok(_api_post(endpoint, payload))
+    return _ok(await _api_post(endpoint, payload))
 
 
 @mcp.tool()
 @handle_errors
 async def bb_create_postings_batch_free(free_postings: list) -> str:
     """Create multiple free postings in batch. free_postings is a list of dicts with keys: account, amount, postingaccount, date (opt), cost_location (opt), cost_location_two (opt)."""
-    return _ok(_api_post("postings/add-batch/free", {"free_postings": free_postings}))
+    return _ok(await _api_post("postings/add-batch/free", {"free_postings": free_postings}))
 
 
 @mcp.tool()
 @handle_errors
 async def bb_create_postings_batch_receipts(receipt_postings: list) -> str:
     """Create multiple receipt postings in batch. receipt_postings is a list of dicts with keys: receipt_id_by_customer, postings (list of {account, amount, postingaccount}), cost_locations (opt), cost_locations_two (opt)."""
-    return _ok(_api_post("postings/add-batch/receipts", {"receipt_postings": receipt_postings}))
+    return _ok(await _api_post("postings/add-batch/receipts", {"receipt_postings": receipt_postings}))
 
 
 @mcp.tool()
 @handle_errors
 async def bb_create_postings_batch_transactions(transaction_postings: list) -> str:
     """Create multiple transaction postings in batch. transaction_postings is a list of dicts with keys: transaction_id_by_customer, postings (list of {account, amount, postingaccount}), cost_locations (opt), cost_locations_two (opt)."""
-    return _ok(_api_post("postings/add-batch/transactions", {"transaction_postings": transaction_postings}))
+    return _ok(await _api_post("postings/add-batch/transactions", {"transaction_postings": transaction_postings}))
 
 
 @mcp.tool()
@@ -535,7 +538,7 @@ async def bb_assign_receipt_to_free_posting(
     posting_id_by_customer: int,
 ) -> str:
     """Assign a receipt to a free posting. Required: receipt_id_by_customer, posting_id_by_customer."""
-    return _ok(_api_post("postings/assign/receipt-to-free-posting", {
+    return _ok(await _api_post("postings/assign/receipt-to-free-posting", {
         "receipt_id_by_customer": receipt_id_by_customer,
         "posting_id_by_customer": posting_id_by_customer,
     }))
@@ -545,14 +548,14 @@ async def bb_assign_receipt_to_free_posting(
 @handle_errors
 async def bb_unconfirm_free_posting(posting_id_by_customer: int) -> str:
     """Unconfirm (delete) a free posting by its customer ID. Required: posting_id_by_customer."""
-    return _ok(_api_post("postings/unconfirm/free", {"posting_id_by_customer": posting_id_by_customer}))
+    return _ok(await _api_post("postings/unconfirm/free", {"posting_id_by_customer": posting_id_by_customer}))
 
 
 @mcp.tool()
 @handle_errors
 async def bb_unconfirm_receipt_posting(receipt_id_by_customer: int) -> str:
     """Unconfirm (delete) all postings for a receipt. Required: receipt_id_by_customer."""
-    return _ok(_api_post("postings/unconfirm/receipt", {
+    return _ok(await _api_post("postings/unconfirm/receipt", {
         "receipt_id_by_customer": receipt_id_by_customer,
     }))
 
@@ -561,7 +564,7 @@ async def bb_unconfirm_receipt_posting(receipt_id_by_customer: int) -> str:
 @handle_errors
 async def bb_unconfirm_transaction_posting(transaction_id_by_customer: int) -> str:
     """Unconfirm (delete) all postings for a transaction. Required: transaction_id_by_customer."""
-    return _ok(_api_post("postings/unconfirm/transaction", {
+    return _ok(await _api_post("postings/unconfirm/transaction", {
         "transaction_id_by_customer": transaction_id_by_customer,
     }))
 
@@ -608,7 +611,7 @@ async def bb_list_receipts(
         payload["due_date"] = due_date
     if order:
         payload["order"] = order
-    return _ok(_api_post("receipts/get", payload))
+    return _ok(await _api_post("receipts/get", payload))
 
 
 @mcp.tool()
@@ -621,7 +624,7 @@ async def bb_get_receipt(
     payload: dict = {"receipt_id_by_customer": receipt_id_by_customer}
     if get_file:
         payload["get_file"] = True
-    return _ok(_api_post("receipts/get/id_by_customer", payload))
+    return _ok(await _api_post("receipts/get/id_by_customer", payload))
 
 
 @mcp.tool()
@@ -673,7 +676,7 @@ async def bb_upload_receipt(
         payload["date_payment_due"] = date_payment_due
     if link_to_receipt_id_by_customer:
         payload["link_to_receipt_id_by_customer"] = link_to_receipt_id_by_customer
-    return _ok(_api_post("receipts/upload", payload))
+    return _ok(await _api_post("receipts/upload", payload))
 
 
 @mcp.tool()
@@ -716,14 +719,14 @@ async def bb_add_receipt(
         payload["date_payment_due"] = date_payment_due
     if link_to_receipt_id_by_customer:
         payload["link_to_receipt_id_by_customer"] = link_to_receipt_id_by_customer
-    return _ok(_api_post("receipts/add", payload))
+    return _ok(await _api_post("receipts/add", payload))
 
 
 @mcp.tool()
 @handle_errors
 async def bb_add_receipts_batch(receipts: list) -> str:
     """Add multiple receipts in batch. receipts is a list of dicts with the same keys as bb_add_receipt."""
-    return _ok(_api_post("receipts/addBatch", {"receipts": receipts}))
+    return _ok(await _api_post("receipts/addBatch", {"receipts": receipts}))
 
 
 @mcp.tool()
@@ -736,14 +739,14 @@ async def bb_get_assigned_transactions(
     payload: dict = {"receipt_id_by_customer": receipt_id_by_customer}
     if confirmed_only:
         payload["confirmed_only"] = True
-    return _ok(_api_post("receipts/assigned-transactions/get", payload))
+    return _ok(await _api_post("receipts/assigned-transactions/get", payload))
 
 
 @mcp.tool()
 @handle_errors
 async def bb_delete_receipt(receipt_id_by_customer: str) -> str:
     """Delete a receipt by its customer ID."""
-    return _ok(_api_post("receipts/delete/id_by_customer", {
+    return _ok(await _api_post("receipts/delete/id_by_customer", {
         "receipt_id_by_customer": receipt_id_by_customer
     }))
 
@@ -752,7 +755,7 @@ async def bb_delete_receipt(receipt_id_by_customer: str) -> str:
 @handle_errors
 async def bb_restore_receipt(receipt_id_by_customer: str) -> str:
     """Restore a previously deleted receipt."""
-    return _ok(_api_post("receipts/restore/id_by_customer", {
+    return _ok(await _api_post("receipts/restore/id_by_customer", {
         "receipt_id_by_customer": receipt_id_by_customer
     }))
 
@@ -765,14 +768,14 @@ async def bb_restore_receipt(receipt_id_by_customer: str) -> str:
 @handle_errors
 async def bb_list_debtors(limit: int = 500, offset: int = 0) -> str:
     """List all debtors (Debitoren / Kunden)."""
-    return _ok(_api_post("settings/get/debtors", {"limit": limit, "offset": offset}))
+    return _ok(await _api_post("settings/get/debtors", {"limit": limit, "offset": offset}))
 
 
 @mcp.tool()
 @handle_errors
 async def bb_list_creditors(limit: int = 500, offset: int = 0) -> str:
     """List all creditors (Kreditoren / Lieferanten)."""
-    return _ok(_api_post("settings/get/creditors", {"limit": limit, "offset": offset}))
+    return _ok(await _api_post("settings/get/creditors", {"limit": limit, "offset": offset}))
 
 
 @mcp.tool()
@@ -798,7 +801,7 @@ async def bb_list_postingaccounts(
         payload["exclude_creditors"] = True
     if exclude_debtors:
         payload["exclude_debtors"] = True
-    return _ok(_api_post("settings/get/postingaccounts", payload))
+    return _ok(await _api_post("settings/get/postingaccounts", payload))
 
 
 def _build_contact_payload(
@@ -869,7 +872,7 @@ async def bb_add_creditor(
 ) -> str:
     """Add a new creditor (Kreditor / Lieferant)."""
     payload = _build_contact_payload(**locals())
-    return _ok(_api_post("settings/add/creditor", payload))
+    return _ok(await _api_post("settings/add/creditor", payload))
 
 
 @mcp.tool()
@@ -891,21 +894,21 @@ async def bb_add_debtor(
 ) -> str:
     """Add a new debtor (Debitor / Kunde)."""
     payload = _build_contact_payload(**locals())
-    return _ok(_api_post("settings/add/debtor", payload))
+    return _ok(await _api_post("settings/add/debtor", payload))
 
 
 @mcp.tool()
 @handle_errors
 async def bb_add_creditors_batch(creditors: list) -> str:
     """Add multiple creditors in batch. Each dict uses the same keys as bb_add_creditor."""
-    return _ok(_api_post("settings/add-batch/creditors", {"creditors": creditors}))
+    return _ok(await _api_post("settings/add-batch/creditors", {"creditors": creditors}))
 
 
 @mcp.tool()
 @handle_errors
 async def bb_add_debtors_batch(debtors: list) -> str:
     """Add multiple debtors in batch. Each dict uses the same keys as bb_add_debtor."""
-    return _ok(_api_post("settings/add-batch/debtors", {"debtors": debtors}))
+    return _ok(await _api_post("settings/add-batch/debtors", {"debtors": debtors}))
 
 
 @mcp.tool()
@@ -923,7 +926,7 @@ async def bb_add_postingaccount(
         payload["name"] = name
     if type:
         payload["type"] = type
-    return _ok(_api_post("settings/add/postingaccount", payload))
+    return _ok(await _api_post("settings/add/postingaccount", payload))
 
 
 @mcp.tool()
@@ -944,7 +947,7 @@ async def bb_update_creditor(
 ) -> str:
     """Update an existing creditor (Kreditor)."""
     payload = _build_contact_payload(**locals())
-    return _ok(_api_post("settings/update/creditor", payload))
+    return _ok(await _api_post("settings/update/creditor", payload))
 
 
 @mcp.tool()
@@ -965,7 +968,7 @@ async def bb_update_debtor(
 ) -> str:
     """Update an existing debtor (Debitor)."""
     payload = _build_contact_payload(**locals())
-    return _ok(_api_post("settings/update/debtor", payload))
+    return _ok(await _api_post("settings/update/debtor", payload))
 
 
 @mcp.tool()
@@ -983,7 +986,7 @@ async def bb_update_postingaccount(
         payload["name"] = name
     if type:
         payload["type"] = type
-    return _ok(_api_post("settings/update/postingaccount", payload))
+    return _ok(await _api_post("settings/update/postingaccount", payload))
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -1016,14 +1019,14 @@ async def bb_list_transactions(
         payload["account"] = account
     if to_from:
         payload["to_from"] = to_from
-    return _ok(_api_post("transactions/get", payload))
+    return _ok(await _api_post("transactions/get", payload))
 
 
 @mcp.tool()
 @handle_errors
 async def bb_get_transaction(id_by_customer: str) -> str:
     """Get a single transaction by its customer ID."""
-    return _ok(_api_post("transactions/get/id_by_customer", {
+    return _ok(await _api_post("transactions/get/id_by_customer", {
         "id_by_customer": id_by_customer
     }))
 
@@ -1059,14 +1062,14 @@ async def bb_add_transaction(
         payload["booking_text"] = booking_text
     if payment_reference:
         payload["payment_reference"] = payment_reference
-    return _ok(_api_post("transactions/add", payload))
+    return _ok(await _api_post("transactions/add", payload))
 
 
 @mcp.tool()
 @handle_errors
 async def bb_add_transactions_batch(transactions: list) -> str:
     """Add multiple transactions in batch. Each dict uses the same keys as bb_add_transaction."""
-    return _ok(_api_post("transactions/addBatch", {"transactions": transactions}))
+    return _ok(await _api_post("transactions/addBatch", {"transactions": transactions}))
 
 
 @mcp.tool()
@@ -1076,7 +1079,7 @@ async def bb_assign_receipt_to_transaction(
     transaction_id_by_customer: str,
 ) -> str:
     """Assign a receipt to a transaction."""
-    return _ok(_api_post("transactions/assign/receipt", {
+    return _ok(await _api_post("transactions/assign/receipt", {
         "receipt_id_by_customer": receipt_id_by_customer,
         "transaction_id_by_customer": transaction_id_by_customer,
     }))
@@ -1086,7 +1089,7 @@ async def bb_assign_receipt_to_transaction(
 @handle_errors
 async def bb_assign_receipts_to_transactions_batch(assignments: list) -> str:
     """Assign multiple receipts to transactions in batch. Each dict has: receipt_id_by_customer, transaction_id_by_customer."""
-    return _ok(_api_post("transactions/assign-batch/receipt", {"assignments": assignments}))
+    return _ok(await _api_post("transactions/assign-batch/receipt", {"assignments": assignments}))
 
 
 @mcp.tool()
@@ -1099,7 +1102,7 @@ async def bb_get_assigned_receipts(
     payload: dict = {"transaction_id_by_customer": transaction_id_by_customer}
     if confirmed_only:
         payload["confirmed_only"] = True
-    return _ok(_api_post("transactions/assigned-receipts/get", payload))
+    return _ok(await _api_post("transactions/assigned-receipts/get", payload))
 
 
 @mcp.tool()
@@ -1109,7 +1112,7 @@ async def bb_unassign_receipt_from_transaction(
     transaction_id_by_customer: str,
 ) -> str:
     """Unassign a receipt from a transaction."""
-    return _ok(_api_post("transactions/unassign/receipt", {
+    return _ok(await _api_post("transactions/unassign/receipt", {
         "receipt_id_by_customer": receipt_id_by_customer,
         "transaction_id_by_customer": transaction_id_by_customer,
     }))
